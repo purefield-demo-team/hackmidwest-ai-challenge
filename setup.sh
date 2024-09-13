@@ -37,7 +37,7 @@ oc get DSCInitialization,FeatureTracker -n redhat-ods-operator
 rosa-create-users-groups.sh
 # ?? Map each namespace to a worker node
 # Provision S3 Storage (endpoint requires protocol, valid cert via public url)
-curl -O setup-s3.yaml https://github.com/rh-aiservices-bu/fraud-detection/raw/main/setup/setup-s3.yaml
+curl -o setup-s3.yaml https://github.com/rh-aiservices-bu/fraud-detection/raw/main/setup/setup-s3.yaml
 # Application Routes
 # Create Workbench
 # Available images: oc get imagestream -n redhat-ods-applications
