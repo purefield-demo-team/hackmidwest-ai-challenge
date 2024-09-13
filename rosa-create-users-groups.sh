@@ -18,7 +18,7 @@ for i in {0..9}; do
   oc adm groups add-users $team $users
   # oc create rolebinding $team-admin-rb --role=admin --group=$team --namespace=$team
   oc adm policy add-role-to-group admin $team -n $team
-  oc apply -n $team -f setup-s3.yaml
+  oc apply -n $team -f configs/setup-s3.yaml
   for user in $users; do 
     oc create identity $provider:$user
     pass=$(openssl rand -base64 12);
