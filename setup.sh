@@ -1,3 +1,4 @@
+mkdir scratch -p
 # Upgrade Cluster to latest version
 rosa list versions
 rosa upgrade cluster -c rosa-$GUID --schedule-date $(date -d "+5 minutes 30 seconds" +"%Y-%m-%d") --schedule-time $(date -d "+5 minutes 30 seconds" +"%H:%M") --control-plane -m auto -y --version 4.16.10
