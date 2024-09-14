@@ -13,7 +13,7 @@ for i in {0..9}; do
   team=${teams[$i]}
   login="scratch/$team.users.csv"; echo -n '' > $login;
   users=$(for u in {0..9}; do echo -n "${animals[$((u + i * 10))]} "; done)
-  echo '{"apiVersion": "v1","kind": "Namespace","metadata": {"name": "'$team'"}}' | oc create -f -
+  echo '{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"'$team'","labels":{"opendatahub.io/dashboard":"true"}}}' | oc create -f -
   oc adm groups new $team; 
   oc adm groups add-users $team $users
   oc adm policy add-role-to-group admin $team -n $team
