@@ -6,6 +6,7 @@ mkdir -p scratch/
 # Upgrade Cluster to latest version
 rosa list versions  | sort -nr | head
 rosa upgrade cluster -c rosa-$GUID --schedule-date $(date -d "+5 minutes 30 seconds" +"%Y-%m-%d") --schedule-time $(date -d "+5 minutes 30 seconds" +"%H:%M") --control-plane -m auto -y --version 4.16.10
+watch rosa list upgrades -c rosa-$GUI
 # wait for cluster upgrade to finish
 # todo
 rosa create machinepool -c rosa-$GUID --name=intel-amx --min-replicas=2 --max-replicas=8 --instance-type=m7i.8xlarge --enable-autoscaling --labels nodes=amx
