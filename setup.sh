@@ -1,14 +1,18 @@
-mkdir scratch -p
+# Checkout dependencies
+git clone git@github.com:purefield-demo-team/hackmidwest-ai-challenge.git
+cd hackmidwest-ai-challenge
+# Setup dependencies
+mkdir -p scratch/
 # Upgrade Cluster to latest version
-rosa list versions
+rosa list versions  | sort -nr | head
 rosa upgrade cluster -c rosa-$GUID --schedule-date $(date -d "+5 minutes 30 seconds" +"%Y-%m-%d") --schedule-time $(date -d "+5 minutes 30 seconds" +"%H:%M") --control-plane -m auto -y --version 4.16.10
 # wait for cluster upgrade to finish
 # todo
-rosa create machinepool -c rosa-${GUID} --name=intel-amx --min-replicas=2 --max-replicas=8 --instance-type=m7i.8xlarge --enable-autoscaling --labels nodes=amx
+rosa create machinepool -c rosa-$GUID --name=intel-amx --min-replicas=2 --max-replicas=8 --instance-type=m7i.8xlarge --enable-autoscaling --labels nodes=amx
 # wait for machinepool to be ready
 oc wait --for=jsonpath='{.status.phase}'=Active node -l nodes=amx
 sleep 5m
-rosa list machinepools -c rosa-${GUID}
+rosa list machinepools -c rosa-$GUID
 rosa update machinepool -c rosa-$GUID --replicas 0 workers
 # Have a default storage class
 # Install Operators
