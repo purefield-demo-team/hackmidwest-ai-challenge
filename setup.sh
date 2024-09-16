@@ -30,6 +30,9 @@ oc create -f configs/authorino-subscription.yaml
 oc get subscriptions -A
 ## OpenShift AI >2.11 via OLM on ROSA
 oc get projects -w | grep -E "redhat-ods|rhods"
+oc create -f configs/rhoai-operator-ns.yaml
+oc create -f configs/rhoai-operator-group.yaml
+oc create -f configs/rhoai-operator-subscription.yaml
 oc create -f configs/rhoai-operator-dsc.yaml
 oc get DSCInitialization,FeatureTracker -n redhat-ods-operator
 ## Intel Device Plugins Operator
@@ -37,13 +40,13 @@ oc get DSCInitialization,FeatureTracker -n redhat-ods-operator
 ## ?? Node Feature Discovery Operator using defaults
 ## ?? OpenShift Pipelines
 ## ?? Red Hat OpenShift Dev Spaces
+
 # Create namespace for each team, setup groups and roles
-# ?? Create Data Science Project
+# - Create Data Science Project
+# - Provision S3 Storage (endpoint requires protocol, valid cert via public url)
 # ?? Github authentication
-rosa-create-users-groups.sh
 # ?? Map each namespace to a worker node
-# Provision S3 Storage (endpoint requires protocol, valid cert via public url)
-wget https://github.com/rh-aiservices-bu/fraud-detection/raw/main/setup/setup-s3.yaml
+rosa-create-users-groups.sh
 # Application Routes
 # Create Workbench
 # Available images: oc get imagestream -n redhat-ods-applications
