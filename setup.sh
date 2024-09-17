@@ -1,11 +1,11 @@
 # ssh to bastion using -A flag
-BASTION=bastion.wbdjt.sandbox765.opentlc.com
+BASTION=bastion.trnp7.sandbox769.opentlc.com
 ssh-copy-id rosa@$BASTION
 ssh -A rosa@$BASTION
 # rosa login for oc cli
 rosa create admin --cluster rosa-$GUID
 # setup env
-API_URL=https://api.rosa-wbdjt.1f4i.p3.openshiftapps.com:443
+API_URL=https://api.rosa-trnp7.58jg.p3.openshiftapps.com:443
 if [ -z "$API_PWD" ]; then read -sp "Enter: " API_PWD; fi
 oc login -u cluster-admin -p "$API_PWD" "$API_URL"
 # Checkout dependencies
@@ -17,7 +17,7 @@ mkdir -p scratch/
 rosa create machinepool -c rosa-$GUID --name=intel-amx --min-replicas=2 --max-replicas=8 --instance-type=m7i.8xlarge --enable-autoscaling --labels nodes=amx
 # Upgrade Cluster to latest version
 rosa list versions  | sort -nr | head
-rosa upgrade cluster -c rosa-$GUID --schedule-date $(date -d "+5 minutes 30 seconds" +"%Y-%m-%d") --schedule-time $(date -d "+6 minutes" +"%H:%M") -m auto -y --version 4.16.10
+rosa upgrade cluster -c rosa-$GUID --control-plane --schedule-date $(date -d "+5 minutes 30 seconds" +"%Y-%m-%d") --schedule-time $(date -d "+6 minutes" +"%H:%M") -m auto -y --version 4.16.10
 watch rosa list upgrades -c rosa-$GUID
 # wait for cluster upgrade to finish
 # wait for machinepool to be ready
@@ -55,7 +55,7 @@ oc get DSCInitialization,FeatureTracker -n redhat-ods-operator
 # - Provision S3 Storage (endpoint requires protocol, valid cert via public url)
 # ?? Github authentication
 # ?? Map each namespace to a worker node
-rosa-create-users-groups.sh
+./rosa-create-users-groups.sh
 # Application Routes
 # Create Workbench
 # Available images: oc get imagestream -n redhat-ods-applications

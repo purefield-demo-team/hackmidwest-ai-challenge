@@ -2,6 +2,7 @@ teams=(wisdom logic insight vision clarity focus genius reason skill wit)
 animals=(akita alligator alpaca anaconda armadillo badger bat bear beaver bison bobcat bonobo bunny bushbaby butterfly calf camel cat cheetah chicken chimp chinchilla chinook clam cobra corgi cougar cow coyote crab crocodile cub deer dog duck eagle elephant ermine falcon fawn ferret fox frog garter gerbil giraffe goat gopher gorilla grizzly hare hawk hedgehog hippopotamus horse hummingbird ibex impala jackal jaguar jellyfish kangaroo kid kingfisher koala lamb lemming lemur lion lizard llama lobster lynx marmoset marmot marten meerkat mink mole mongoose moose mouse muskrat octopus opossum orangutan otter panda peacock pig pika platypus polar poodle porcupine possum pronghorn puma pup python quagga rabbit raccoon rat rattlesnake rhinoceros sable salamander seahorse sheep shih shrew skunk snake spaniel starfish stoat tapir tasmani tiger toad turkey turtle tzu vicuña vole wallaby weasel wolf wolverine wombat yak zebra)
 auth="scratch/teams.htpasswd"; echo -n '' > $auth;
 provider=ai-hacker
+console=$(oc whoami --show-console)
 rosa delete idp --cluster=rosa-$GUID $provider -y
 oc get identity -o jsonpath='{range .items[?(@.providerName=="ai-hacker")]}{.metadata.name}{"\n"}{end}' | xargs -i oc delete identity {}
 for i in {0..9}; do
@@ -11,7 +12,8 @@ for i in {0..9}; do
 done
 for i in {0..9}; do
   team=${teams[$i]}
-  login="scratch/$team.users.csv"; echo -n '' > $login;
+  login="scratch/$team.users.csv"; 
+  echo $console > $login;
   users=$(for u in {0..9}; do echo -n "${animals[$((u + i * 10))]} "; done)
   echo '{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"'$team'","labels":{"opendatahub.io/dashboard":"true"}}}' | oc create -f -
   oc adm groups new $team; 
