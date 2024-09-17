@@ -33,6 +33,9 @@ for i in {0..9}; do
   echo -n 'MinIO-Root,' >> $login;
   oc get secret -n $team minio-root-user -o go-template --template="{{.data.MINIO_ROOT_USER|base64decode}},{{.data.MINIO_ROOT_PASSWORD|base64decode}}" >> $login
 done
+# confirm setup
+egrep -i 'https|minio' scratch/*
+
 
 exit 0;
 
