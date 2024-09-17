@@ -3,6 +3,7 @@ animals=(akita alligator alpaca anaconda armadillo badger bat bear beaver bison 
 auth="scratch/teams.htpasswd"; echo -n '' > $auth;
 provider=ai-hacker
 console=$(oc whoami --show-console)
+api=$(oc whoami --show-server)
 rosa delete idp --cluster=rosa-$GUID $provider -y
 oc get identity -o jsonpath='{range .items[?(@.providerName=="ai-hacker")]}{.metadata.name}{"\n"}{end}' | xargs -i oc delete identity {}
 for i in {0..9}; do
@@ -14,6 +15,7 @@ for i in {0..9}; do
   team=${teams[$i]}
   login="scratch/$team.users.csv"; 
   echo $console > $login;
+  echo $api >> $login;
   users=$(for u in {0..9}; do echo -n "${animals[$((u + i * 10))]} "; done)
   echo '{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"'$team'","labels":{"opendatahub.io/dashboard":"true"}}}' | oc create -f -
   oc adm groups new $team; 
