@@ -44,10 +44,8 @@ oc create -f configs/rhoai-operator-subscription.yaml
 oc get projects -w | grep -E "redhat-ods|rhods"
 oc create -f configs/rhoai-operator-dsc.yaml
 oc get DSCInitialization,FeatureTracker -n redhat-ods-operator
-## Intel Device Plugins Operator
-## Create QAT instance using defaults
-## ?? Node Feature Discovery Operator using defaults
-## ?? OpenShift Pipelines
+## OpenShift Pipelines
+# Install operator with defaults using UI
 ## Red Hat OpenShift Dev Spaces
 # Install operator, create CheCluster with defaults using UI
 
