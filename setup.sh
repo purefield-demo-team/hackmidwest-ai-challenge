@@ -48,7 +48,8 @@ oc get DSCInitialization,FeatureTracker -n redhat-ods-operator
 ## Create QAT instance using defaults
 ## ?? Node Feature Discovery Operator using defaults
 ## ?? OpenShift Pipelines
-## ?? Red Hat OpenShift Dev Spaces
+## Red Hat OpenShift Dev Spaces
+# Install operator, create CheCluster with defaults using UI
 
 # Create namespace for each team, setup groups and roles
 # - Create Data Science Project
