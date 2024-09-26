@@ -30,7 +30,7 @@ for i in {0..29}; do
   echo $api >> $login;
 	echo 'group,username,password' >> $login;
   users=$(for u in {0..9}; do echo -n "${username[$((u + i * 10))]} "; done)
-  echo '{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"'$team'","labels":{"opendatahub.io/dashboard":"true"}}}' | oc create -f -
+  echo '{"apiVersion":"v1","kind":"Namespace","metadata":{"name":"'$team'","labels":{"event":"hmw","opendatahub.io/dashboard":"true"}}}' | oc create -f -
   oc adm groups new $team; 
   oc adm groups add-users $team $users
   oc adm policy add-role-to-group admin $team -n $team
