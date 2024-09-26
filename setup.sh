@@ -48,6 +48,7 @@ oc get DSCInitialization,FeatureTracker -n redhat-ods-operator
 # Install operator with defaults using UI
 ## Red Hat OpenShift Dev Spaces
 # Install operator, create CheCluster with defaults using UI
+oc patch checluster devspaces -n openshift-operators --type='merge' -p='{"spec": {"devEnvironments": {"secondsOfInactivityBeforeIdling": -1,"secondsOfRunBeforeIdling": -1}}}'
 
 # Create namespace for each team, setup groups and roles
 # - Create Data Science Project
