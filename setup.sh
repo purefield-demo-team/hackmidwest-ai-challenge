@@ -34,7 +34,7 @@ if [[ -n "$step" && "$step" == "2" ]]; then
 fi
 if [[ -n "$step" && "$step" == "3" ]]; then 
   __ "Step 3 - Configure ROSA machine pool" 3
-  _? "What is the instance type to use" instanceType g5.4xlarge
+  _? "What is the instance type to use" instanceType g4dn.8xlarge
   _? "What is the number of minimum replicas" minReplicas 2
   _? "What is the number of maximum replicas" maxReplicas 10
   __ "Add $instanceType machine pool with $minReplicas <= n <= $maxReplicas nodes" 4
@@ -61,14 +61,34 @@ if [[ -n "$step" && "$step" == "5" ]]; then
   oo $(rosa list machinepools -c rosa-$GUID -o json | jq '.[] | select(.id=="ai-worker") .autoscaling.min_replica') "rosa list machinepools -c rosa-$GUID -o json | jq '$query'"
   unset query
   __ "Switch to AI machine pool" 4
-  cmd "rosa update machinepool -c rosa-$GUID --replicas 0 workers"
+  cmd "rosa update machinepool -c rosa-$GUID --replicas 2 workers"
   __ "Verify machine pools" 4
   cmd "rosa list machinepools -c rosa-$GUID"
   step=6
 fi
 if [[ -n "$step" && "$step" == "6" ]]; then 
+  __ "Set up Accellerators" 2
+  __ "Step 7 - Configure Nvidia GPU and Node Feature Discovery" 3
+  cmd "oc apply -f configs/nfd-operator-ns.yaml"
+  cmd "oc apply -f configs/nfd-operator-group.yaml"
+  cmd "oc apply -f configs/nfd-operator-sub.yaml"
+  oo 1 "oc get CustomResourceDefinition nodefeaturediscoveries.nfd.openshift.io -o name | wc -l"
+  cmd "oc apply -f configs/nfd-instance.yaml"
+  cmd "oc apply -f configs/nvidia-gpu-operator-ns.yaml"
+  cmd "oc apply -f configs/nvidia-gpu-operator-group.yaml"
+  cmd "oc apply -f configs/nvidia-gpu-operator-subscription.yaml"
+  oo 1 "oc get CustomResourceDefinition clusterpolicies.nvidia.com -o name  | wc -l"
+  cmd "oc apply -f configs/nvidia-gpu-deviceplugin-cm.yaml"
+  cmd "oc apply -f configs/nvidia-gpu-clusterpolicy.yaml"
+
+  __ "Wait for nvidia gpu operator dependencies to be ready" 3
+  oo 9 "oc get pod -n nvidia-gpu-operator -o name | wc -l"
+  cmd "oc wait pod --all -n nvidia-gpu-operator --for=condition=ready --timeout=15m"
+  step=7
+fi
+if [[ -n "$step" && "$step" == "7" ]]; then 
   __ "Set up OpenShift AI" 2
-  __ "Step 6 - Install Operators" 3
+  __ "Step 7 - Install Operators" 3
   __ "Web Terminal Operator" 4
   cmd oc apply -f configs/web-terminal-subscription.yaml
   __ "OpenShift Service Mesh" 4
@@ -106,12 +126,13 @@ if [[ -n "$step" && "$step" == "6" ]]; then
   __ "Patch CheCluster to never idle" 4
   patch='{"spec": {"devEnvironments": {"secondsOfInactivityBeforeIdling": -1,"secondsOfRunBeforeIdling": -1}}}'
   cmd "oc patch checluster devspaces -n openshift-devspaces --type='merge' -p='$patch'"
-  step=7
+
+  step=8
 fi
 # Have a default storage class
-if [[ -n "$step" && "$step" == "7" ]]; then 
+if [[ -n "$step" && "$step" == "8" ]]; then 
   __ "Set up Teams" 2
-  __ "Step 7 - Create namespace for each team, setup groups and roles" 3
+  __ "Step 8 - Create namespace for each team, setup groups and roles" 3
   __ "Provision S3 Storage (endpoint requires protocol, valid cert via public url)" 4
   __ "Create groups for each team with 10 users" 5
   __ "Create Data Science Project" 6

@@ -1,0 +1,37 @@
+HackMidwest Development Environment Credentials
+
+
+Thank you for requesting a development environment for HackMidwest. 
+
+Here are your credentials to access the Red Hat OpenShift Environment with Intel AMX hardware acceleration. Please let me know if you have any questions or need help getting started.
+
+Getting Started guides:
+https://github.com/redhat-events/hackmidwest
+
+
+
+Good luck!!
+
+
+
+Context of corporate constraints
+
+Environment signup in pitch
+Create static public Getting Started Page
+DevSpaces persists setup
+
+
+
+
+LinkedIN
+Capture Code
+Cleanup Demo System
+Connect with winners
+
+55 workshop participants
+39 registered team members
+27 active OCP users 
+13 OCP teams
+3-5 m7i.8xlarge nodes during the event
+
+
