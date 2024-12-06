@@ -220,9 +220,37 @@ if [[ -n "$step" && "$step" == "9" ]]; then
   __ "Step 9 - Install React Frontend" 2
 
   _? "Optional: OpenAI Key: " openAiKey xxxxxx $openAiKey
-  strapiUrl="https://strapi-$NAMESPACE.apps.rosa.$baseDomain/v1"
-  keycloakUrl="https://keycloak-$NAMESPACE.apps.rosa.$baseDomain/v1"
+  strapiUrl="https://strapi-$NAMESPACE.apps.rosa.$baseDomain/api"
+  keycloakUrl="https://keycloak-$NAMESPACE.apps.rosa.$baseDomain"
   setValues="openai.key=$openAiKey,cluster.name=rosa,cluster.domain=$baseDomain,strapi.url=$strapiUrl,keycloak.url=$keycloakUrl"
+
+  __ "Add react-frontend url to keycloak realm" 3
+  username=admin
+  __ "Try to find initial keycloak admin password in pre-requisites" 4
+  _? "Keycloak admin password: " password "" $(egrep 'keycloak.*?inital admin password is' ${GITOPS_PATH}rhbk/pre-requisites.txt | cut -d\: -f 2)
+  reactUrl=https://react-frontend-$NAMESPACE.apps.rosa.$baseDomain
+  export access_token="$(curl -ksX POST "$keycloakUrl/realms/master/protocol/openid-connect/token" \
+       -H "Content-Type: application/x-www-form-urlencoded" \
+       -d 'client_id=admin-cli' \
+       -d 'grant_type=password' \
+       -d "username=$username" \
+       -d "password=$password" | jq -r '.access_token')"
+  id=$(curl -ksX GET "$keycloakUrl/admin/realms/fihr-rag-llm/clients?clientId=fihr-rag-chat" \
+       -H "Authorization: Bearer $access_token" | jq -r '.[].id')
+  __ "Update keycloak realm" 4
+  export data='{
+         "clientId": "fihr-rag-chat",
+         "redirectUris": [
+           "'$reactUrl/*'",
+           "'$reactUrl'",
+           "http://localhost:3000/*",
+           "http://localhost:3000/"
+         ]
+       }'
+  cmd "curl -ksX PUT '$keycloakUrl/admin/realms/fihr-rag-llm/clients/$id' -H 'Content-Type: application/json' -H \"Authorization: Bearer \$access_token\" -d \"\$data\""
+  unset access_token
+  unset password
+  unset data
 
   __ "Run helm charts for the react app" 3
   cmd "helm install react-frontend ${GITOPS_PATH}react-frontend/ --set-string '$setValues'"

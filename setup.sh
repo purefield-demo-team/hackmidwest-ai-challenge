@@ -34,8 +34,8 @@ if [[ -n "$step" && "$step" == "2" ]]; then
 fi
 if [[ -n "$step" && "$step" == "3" ]]; then 
   __ "Step 3 - Configure ROSA machine pool" 3
-  _? "What is the instance type to use" instanceType g5.2xlarge
-  _? "What is the number of minimum replicas" minReplicas 2
+  _? "What is the instance type to use" instanceType g5.12xlarge
+  _? "What is the number of minimum replicas" minReplicas 1
   _? "What is the number of maximum replicas" maxReplicas 2
   __ "Add $instanceType machine pool with $minReplicas <= n <= $maxReplicas nodes" 4
   cmd "rosa create machinepool -c rosa-$GUID --name=ai-worker --min-replicas=$minReplicas --max-replicas=$maxReplicas --instance-type=$instanceType --enable-autoscaling --labels nodes=ai"
