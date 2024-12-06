@@ -60,16 +60,12 @@ if [[ -n "$step" && "$step" == "3" ]]; then
   __ "Copy SSL Certificate into secret" 4
   cmd "oc create secret -n $NAMESPACE tls keycloak-tls-secret --cert ${SCRATCH_PATH}certificate.pem --key ${SCRATCH_PATH}key.pem"
 
-  __ "Configure postgresql variables" 3
-  postgresqlConfig=${GITOPS_PATH}rhbk/keycloak-postgresql-chart/values.yaml
-  podSelector="-l name=keycloak-postgresql -n $NAMESPACE"
-  cmd "perl -pe 's/(\s+name:) salamander/\$1 rosa/' -i $postgresqlConfig"
-  cmd "perl -pe 's/(\s+domain:) aiml.*?$/\$1 $baseDomain/' -i $postgresqlConfig"
-
   __ "Run helm charts for postgresql" 3
-  cmd "helm install keycloak-postgresql ${GITOPS_PATH}rhbk/keycloak-postgresql-chart/"
+  setValues="cluster.name=rosa,cluster.domain=$baseDomain"
+  cmd "helm install keycloak-postgresql ${GITOPS_PATH}rhbk/keycloak-postgresql-chart/ --set-string '$setValues'"
 
   __ "Wait for keycloak-postgres pod to be present" 4
+  podSelector="-l name=keycloak-postgresql -n $NAMESPACE"
   oo 1 "oc get pod $podSelector -o name | wc -l"
   cmd "oc wait pod $podSelector --for=condition=ready --timeout=3m"
 
@@ -81,13 +77,9 @@ if [[ -n "$step" && "$step" == "3" ]]; then
   cmd "oc rsh pod/$pod /bin/bash -c 'pg_restore -d keycloak -U postgres /var/lib/pgsql/data/userdata/keycloak.backup'"
   cmd "oc rsh pod/$pod /bin/bash -c 'rm -f /var/lib/pgsql/data/userdata/keycloak.backup*'"
 
-  __ "Configure keycloak variables" 3
-  keycloakConfig=${GITOPS_PATH}rhbk/keycloak-chart/values.yaml
-  cmd "perl -pe 's/(\s+name:) salamander/\$1 rosa/' -i $keycloakConfig"
-  cmd "perl -pe 's/(\s+domain:) aiml.*?$/\$1 $baseDomain/' -i $keycloakConfig"
-
   __ "Run helm charts" 3
-  cmd "helm install keycloak ${GITOPS_PATH}rhbk/keycloak-chart/"
+  setValues="cluster.name=rosa,cluster.domain=$baseDomain"
+  cmd "helm install keycloak ${GITOPS_PATH}rhbk/keycloak-chart/ --set-string '$setValues'"
 
   step=4
 fi
@@ -96,13 +88,9 @@ if [[ -n "$step" && "$step" == "4" ]]; then
   __ "Step 4 - Install Strapi" 2
   podSelector="-l name=strapi-postgresql -n $NAMESPACE"
 
-  __ "Update strapi helm chart variables" 3
-  strapiConfig=${GITOPS_PATH}strapi/values.yaml
-  cmd "perl -pe 's/(\s+name:) salamander/\$1 rosa/' -i $strapiConfig"
-  cmd "perl -pe 's/(\s+domain:) aiml.*?$/\$1 $baseDomain/' -i $strapiConfig"
-
   __ "Run helm charts for strapi" 3
-  cmd "helm install strapi ${GITOPS_PATH}strapi/"
+  setValues="cluster.name=rosa,cluster.domain=$baseDomain"
+  cmd "helm install strapi ${GITOPS_PATH}strapi/ --set-string '$setValues'"
 
   __ "Wait for strapi-postgres pod to be present" 4
   oo 1 "oc get pod $podSelector -o name | wc -l"
@@ -136,13 +124,9 @@ fi
 if [[ -n "$step" && "$step" == "5" ]]; then 
   __ "Step 5 - Install Redis" 2
   
-  __ "Update redis-search helm chart variables" 3
-  redisConfig=${GITOPS_PATH}redis-search/values.yaml
-  cmd "perl -pe 's/(\s+name:) salamander/\$1 rosa/' -i $redisConfig"
-  cmd "perl -pe 's/(\s+domain:) aiml.*?$/\$1 $baseDomain/' -i $redisConfig"
-
   __ "Run helm charts for redis" 3
-  cmd "helm install redis-search ${GITOPS_PATH}redis-search/"
+  setValues="cluster.name=rosa,cluster.domain=$baseDomain"
+  cmd "helm install redis-search ${GITOPS_PATH}redis-search/ --set-string '$setValues'"
 
   step=6
 fi
@@ -161,16 +145,13 @@ if [[ -n "$step" && "$step" == "6" ]]; then
   export AWS_S3_BUCKET=$(oc get secret -n redhat $s3Connection -o template --template '{{.data.AWS_S3_BUCKET}}' | base64 -d)
   export AWS_ACCESS_KEY_ID=$(oc get secret -n redhat $s3Connection -o template --template '{{.data.AWS_ACCESS_KEY_ID}}' | base64 -d)
   export AWS_SECRET_ACCESS_KEY=$(oc get secret -n redhat $s3Connection -o template --template '{{.data.AWS_SECRET_ACCESS_KEY}}' | base64 -d)
-  cmd "python sync-model.py"
+  cmd "python ./sync-model.py -m 'defog/llama-3-sqlcoder-8b'       -b 'llama-3-sqlcoder-8b'"
+  cmd "python ./sync-model.py -m 'intfloat/e5-mistral-7b-instruct' -b 'e5-mistral-7b-instruct'"
   unset ENDPOINT_URL; unset AWS_ACCESS_KEY_ID; unset AWS_SECRET_ACCESS_KEY
 
-  __ "Update model server helm chart variables" 3
-  serverConfig=${GITOPS_PATH}vector-ask/ai-model/values.yaml
-  cmd "perl -pe 's/(\s+name:) salamander/\$1 rosa/' -i $serverConfig"
-  cmd "perl -pe 's/(\s+domain:) aiml.*?$/\$1 $baseDomain/' -i $serverConfig"
-
   __ "Run helm charts for model server" 3
-  cmd "helm install vector-ask-model ${GITOPS_PATH}vector-ask/ai-model/"
+  setValues="cluster.name=rosa,cluster.domain=$baseDomain"
+  cmd "helm install vector-ask-model ${GITOPS_PATH}vector-ask/ai-model/ --set-string '$setValues'"
 
   step=7
 fi
@@ -178,13 +159,9 @@ if [[ -n "$step" && "$step" == "7" ]]; then
   __ "Step 7 - Install NL2SQL" 2
   podSelector="-l name=nl2sql-sample-postgresql-postgresql -n $NAMESPACE"
 
-  __ "Update nl2sql helm chart variables" 3
-  nl2sqlConfig=${GITOPS_PATH}vector-ask/nl2sql-sample-db/values.yaml
-  cmd "perl -pe 's/(\s+name:) salamander/\$1 rosa/' -i $nl2sqlConfig"
-  cmd "perl -pe 's/(\s+domain:) aiml.*?$/\$1 $baseDomain/' -i $nl2sqlConfig"
-
   __ "Run helm charts for nl2sql" 3
-  cmd "helm install nl2sql-sample-postgresql ${GITOPS_PATH}vector-ask/nl2sql-sample-db/"
+  setValues="cluster.name=rosa,cluster.domain=$baseDomain"
+  cmd "helm install nl2sql-sample-postgresql ${GITOPS_PATH}vector-ask/nl2sql-sample-db/ --set-string '$setValues'"
 
   __ "Wait for nl2sql-postgres pod to be present" 4
   oo 1 "oc get pod $podSelector -o name | wc -l"
@@ -204,7 +181,8 @@ if [[ -n "$step" && "$step" == "8" ]]; then
   
   _? "Optional: OpenAI Key: " openAiKey xxxxxx
   vllmApiUrl="https://llama-3-sqlcoder-8b-$NAMESPACE.apps.rosa.$baseDomain/v1"
-  setValues="openai.key=$openAiKey,cluster.name=rosa,cluster.domain=$baseDomain,vllmApiUrl=$vllmApiUrl"
+  vllmEmbeddingApiUrl="https://e5-mistral-7b-instruct-$NAMESPACE.apps.rosa.$baseDomain/v1"
+  setValues="openai.key=$openAiKey,cluster.name=rosa,cluster.domain=$baseDomain,vllmApiUrl=$vllmApiUrl,vllmEmbeddingApiUrl=$vllmEmbeddingApiUrl"
   
   __ "Run helm charts for quarkus app" 3
   cmd "helm install vector-ask ${GITOPS_PATH}vector-ask/quarkus/ --set-string '$setValues'"
