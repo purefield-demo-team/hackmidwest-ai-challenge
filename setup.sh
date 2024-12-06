@@ -34,9 +34,9 @@ if [[ -n "$step" && "$step" == "2" ]]; then
 fi
 if [[ -n "$step" && "$step" == "3" ]]; then 
   __ "Step 3 - Configure ROSA machine pool" 3
-  _? "What is the instance type to use" instanceType g4dn.8xlarge
+  _? "What is the instance type to use" instanceType g5.2xlarge
   _? "What is the number of minimum replicas" minReplicas 2
-  _? "What is the number of maximum replicas" maxReplicas 10
+  _? "What is the number of maximum replicas" maxReplicas 2
   __ "Add $instanceType machine pool with $minReplicas <= n <= $maxReplicas nodes" 4
   cmd "rosa create machinepool -c rosa-$GUID --name=ai-worker --min-replicas=$minReplicas --max-replicas=$maxReplicas --instance-type=$instanceType --enable-autoscaling --labels nodes=ai"
   step=4
@@ -72,18 +72,17 @@ if [[ -n "$step" && "$step" == "6" ]]; then
   cmd "oc apply -f configs/nfd-operator-ns.yaml"
   cmd "oc apply -f configs/nfd-operator-group.yaml"
   cmd "oc apply -f configs/nfd-operator-sub.yaml"
-  oo 1 "oc get CustomResourceDefinition nodefeaturediscoveries.nfd.openshift.io -o name | wc -l"
+  oo 1 "oc get CustomResourceDefinition nodefeaturediscoveries.nfd.openshift.io -o name 2>/dev/null | wc -l"
   cmd "oc apply -f configs/nfd-instance.yaml"
   cmd "oc apply -f configs/nvidia-gpu-operator-ns.yaml"
   cmd "oc apply -f configs/nvidia-gpu-operator-group.yaml"
   cmd "oc apply -f configs/nvidia-gpu-operator-subscription.yaml"
-  oo 1 "oc get CustomResourceDefinition clusterpolicies.nvidia.com -o name  | wc -l"
+  oo 1 "oc get CustomResourceDefinition clusterpolicies.nvidia.com -o name 2>/dev/null | wc -l"
   cmd "oc apply -f configs/nvidia-gpu-deviceplugin-cm.yaml"
   cmd "oc apply -f configs/nvidia-gpu-clusterpolicy.yaml"
 
   __ "Wait for nvidia gpu operator dependencies to be ready" 3
-  oo 9 "oc get pod -n nvidia-gpu-operator -o name | wc -l"
-  cmd "oc wait pod --all -n nvidia-gpu-operator --for=condition=ready --timeout=15m"
+  oo 9 "oc get pod -n nvidia-gpu-operator -o json | jq -r '.items[] | .status.phase' | egrep 'Running' | wc -l"
   step=7
 fi
 if [[ -n "$step" && "$step" == "7" ]]; then 
@@ -108,7 +107,7 @@ if [[ -n "$step" && "$step" == "7" ]]; then
   oo 3 'oc get projects | grep -E "redhat-ods|rhods" | wc -l'
   cmd oc create -f configs/rhoai-operator-dsc.yaml
   __ "Verify dependencies are installed" 5
-  oo 9 "oc get DSCInitialization,FeatureTracker -n redhat-ods-operator | egrep -i 'DSCInitialization|FeatureTracker' | grep -iv Progressing | wc -l"
+  oo 9 "oc get DSCInitialization,FeatureTracker -n redhat-ods-operator 2>/dev/null | egrep -i 'DSCInitialization|FeatureTracker' | grep -iv Progressing | wc -l"
   cmd oc get DSCInitialization,FeatureTracker -n redhat-ods-operator
   __ "OpenShift Pipelines" 4
   cmd "oc apply -f configs/pipelines-subscription.yaml"
@@ -129,7 +128,6 @@ if [[ -n "$step" && "$step" == "7" ]]; then
 
   step=8
 fi
-# Have a default storage class
 if [[ -n "$step" && "$step" == "8" ]]; then 
   __ "Set up Teams" 2
   __ "Step 8 - Create namespace for each team, setup groups and roles" 3
@@ -138,7 +136,13 @@ if [[ -n "$step" && "$step" == "8" ]]; then
   __ "Create Data Science Project" 6
   __ "Application Routes" 6
   __ "Create Workbench" 6
-  cmd ./rosa-create-users-groups.sh 3
+  ./rosa-create-users-groups.sh
+  step=9
+fi
+if [[ -n "$step" && "$step" == "9" ]]; then 
+  __ "Setup Demo Application stack" 2
+  __ "Step 9 - Run app.sh" 3
+  ./app.sh
 fi
 exit 0;
 # Available images: oc get imagestream -n redhat-ods-applications
