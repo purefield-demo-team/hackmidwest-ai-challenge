@@ -136,7 +136,8 @@ if [[ -n "$step" && "$step" == "8" ]]; then
   __ "Create Data Science Project" 6
   __ "Application Routes" 6
   __ "Create Workbench" 6
-  ./rosa-create-users-groups.sh
+  _? "How many teams with 10 users each (max 30)?" numberTeams 3
+  ./rosa-create-users-groups.sh $numberTeams
   step=9
 fi
 if [[ -n "$step" && "$step" == "9" ]]; then 

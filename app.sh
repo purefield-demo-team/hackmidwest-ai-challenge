@@ -145,7 +145,9 @@ if [[ -n "$step" && "$step" == "6" ]]; then
   export AWS_S3_BUCKET=$(oc get secret -n redhat $s3Connection -o template --template '{{.data.AWS_S3_BUCKET}}' | base64 -d)
   export AWS_ACCESS_KEY_ID=$(oc get secret -n redhat $s3Connection -o template --template '{{.data.AWS_ACCESS_KEY_ID}}' | base64 -d)
   export AWS_SECRET_ACCESS_KEY=$(oc get secret -n redhat $s3Connection -o template --template '{{.data.AWS_SECRET_ACCESS_KEY}}' | base64 -d)
+  __ "defog/llama-3-sqlcoder-8b" 5
   cmd "python ./sync-model.py -m 'defog/llama-3-sqlcoder-8b'       -b 'llama-3-sqlcoder-8b'"
+  __ "intfloat/e5-mistral-7b-instruct" 5
   cmd "python ./sync-model.py -m 'intfloat/e5-mistral-7b-instruct' -b 'e5-mistral-7b-instruct'"
   unset ENDPOINT_URL; unset AWS_ACCESS_KEY_ID; unset AWS_SECRET_ACCESS_KEY
 
@@ -235,6 +237,20 @@ if [[ -n "$step" && "$step" == "9" ]]; then
 
   __ "Build react-frontend app" 3
   cmd "oc start-build react-frontend"
-  __ "Wait for react-frontend build to complete" 4
-  cmd "oc wait builds -l buildconfig=react-frontend --for=condition=complete --timeout=5m"
+  __ "Wait for react-frontend build to complete (timeout 30min)" 4
+  cmd "oc wait builds -l buildconfig=react-frontend --for=condition=complete --timeout=30m"
+
+  step=final
+fi
+if [[ -n "$step" && "$step" == "final" ]]; then 
+  __ "Final Step - Verification" 2
+
+  __ "Wait for model servers to be ready" 3
+  cmd "oc wait InferenceService.serving.kserve.io -n redhat --all --for=condition=ready --timeout=15m"
+
+  __ "Here are the deployed routes to the apps" 3
+  __ "Open the react-frontent app in your browser and register to log in:" 4
+  oc get route -n redhat -o json | jq -r '.items[] | [.metadata.name, ", https://", .spec.host] | join ("")'
+
+  ___ "Deployment Complete"
 fi
