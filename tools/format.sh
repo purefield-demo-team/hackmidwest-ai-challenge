@@ -101,7 +101,7 @@ function __ {
   esac
 }
 
-# Pause for user key
+# Pause for user key or time
 function ___ {
  local msg=$1
  local sec=$2
